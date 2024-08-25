@@ -4,7 +4,7 @@ const ObjectId = require('mongodb').ObjectID;
 module.exports = class Model {
     constructor(name, schema) {
         this.model = mongoose.model(
-            `${process.env.APP_DB_PREFIX}-${name}`,
+            name,
             new mongoose.Schema({
                 ...schema,
                 created_on: {
@@ -15,31 +15,25 @@ module.exports = class Model {
                     type: Date,
                     default: Date.now,
                 },
-            })
+            }),
         );
     }
 
     renderError = (res, message) => {
-      if(typeof message === 'string'){
-        res.json({
-            message: message,
-        });
-      }
-      else{
-        res.json(message)
-      }
+        if (typeof message === 'string') {
+            res.json({
+                message: message,
+            });
+        } else {
+            res.json(message);
+        }
     };
 
     find = (
         res,
         next,
-        {
-            query = {},
-            sort = null,
-            limit = null,
-            select = null,
-        } = {},
-        error = null
+        { query = {}, sort = null, limit = null, select = null } = {},
+        error = null,
     ) => {
         let model = this.model.find(query);
         if (sort) {
@@ -83,30 +77,22 @@ module.exports = class Model {
         entries,
         next,
         { sort = null, select = null } = {},
-        error = null
+        error = null,
     ) => {
         let processData = next;
         if (sort || select) {
             processData = (data) => {
-                let ids = data.map((entry) =>
-                    ObjectId(entry._id)
-                );
-                this.find(res, next, {                  
-                    query: {_id: {$in: ids}},
+                let ids = data.map((entry) => ObjectId(entry._id));
+                this.find(res, next, {
+                    query: { _id: { $in: ids } },
                     select: select,
                     sort: sort,
                 });
             };
         }
-        handleDbAction(
-            this,
-            res,
-            processData,
-            this.model,
-            'create',
-            error,
-            [entries]
-        );
+        handleDbAction(this, res, processData, this.model, 'create', error, [
+            entries,
+        ]);
     };
 
     update = (res, next, change, select = null, error = null) => {
@@ -118,14 +104,7 @@ module.exports = class Model {
             });
         };
         let handleData = (data) => {
-            handleDbAction(
-                this,
-                res,
-                next,
-                changeAction(data),
-                'save',
-                error
-            );
+            handleDbAction(this, res, next, changeAction(data), 'save', error);
         };
         this.find(res, handleData, {
             query: params,
@@ -134,9 +113,9 @@ module.exports = class Model {
 
     updateById = (res, id, params, next, select = null, error = null) => {
         params = {
-          ...params,
-          updated_on: new Date()
-        }
+            ...params,
+            updated_on: new Date(),
+        };
         let handleResult = (data) => {
             handleOneRecordResult(this, res, data, id, next, error);
         };
@@ -155,7 +134,7 @@ module.exports = class Model {
             this.model,
             'findByIdAndUpdate',
             error,
-            [{ _id: id }, params]
+            [{ _id: id }, params],
         );
     };
 
@@ -164,7 +143,7 @@ module.exports = class Model {
         next,
         query,
         { sort = null, select = null } = {},
-        error = null
+        error = null,
     ) => {
         let model = this.model.deleteMany(query);
         if (sort) {
@@ -196,7 +175,7 @@ const handleDbAction = (
     model,
     fnName,
     error = null,
-    params = []
+    params = [],
 ) => {
     let t = timeOut(modelClass, res, error);
     try {
@@ -217,10 +196,7 @@ const handleDbAction = (
 const timeOut = (modelClass, res, error) => {
     let timeout = 10000;
     return setTimeout(() => {
-        modelClass.renderError(
-          res, 
-          error ? error : 'Database Timeout'
-        );
+        modelClass.renderError(res, error ? error : 'Database Timeout');
     }, timeout);
 };
 
@@ -230,15 +206,14 @@ const handleOneRecordResult = (
     data,
     id,
     next,
-    error = null
+    error = null,
 ) => {
     if (data) {
         next(data);
     } else {
         modelClass.renderError(
             res,
-            error ? error : 
-            `No record with the id "${id}"`
+            error ? error : `No record with the id "${id}"`,
         );
     }
 };
