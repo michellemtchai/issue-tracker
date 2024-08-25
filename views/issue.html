@@ -128,7 +128,7 @@
             url: url,
             data: { _id: $(this).attr('id'), open: false },
             success: function (data) {
-              alert(data);
+              alert(JSON.stringify(data, null, 4));
               window.location.reload(true);
             },
           });
@@ -141,7 +141,7 @@
             url: url,
             data: { _id: $(this).attr('id') },
             success: function (data) {
-              alert(data);
+              alert(JSON.stringify(data, null, 4));
               window.location.reload(true);
             },
           });
